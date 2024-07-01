@@ -6,7 +6,7 @@ metadata:
 spec:
   description: "SmartCollect Database"
   imageName: ghcr.io/cloudnative-pg/postgresql:16.3
-  instances: 2
+  instances: 3
   imagePullPolicy: Always
   minSyncReplicas: 1
   maxSyncReplicas: 2
@@ -62,19 +62,6 @@ spec:
   #       immediateCheckpoint: false
   #       jobs: 2
   #   retentionPolicy: "30d"
-
-  affinity:
-    nodeAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-        - labelSelector:
-            matchLabels:
-              cnpg.io/cluster: smartcollect-db
-          topologyKey: kubernetes.io/hostname
-  instaceAffinity:
-    nodeLabel: db-role
-    requiredDuringSchedulingIgnoredDuringExecution:
-      primary: master
-      replica: replica
 
   resources:
     requests:
