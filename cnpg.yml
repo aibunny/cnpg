@@ -15,7 +15,7 @@ spec:
   primaryUpdateStrategy: unsupervised
   storage:
     storageClass: standard
-    size: 200Gi
+    size: 1Gi
   monitoring:
     enablePodMonitor: true
 
