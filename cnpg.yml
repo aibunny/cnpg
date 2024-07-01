@@ -1,0 +1,129 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: smartcollect-db
+  namespace: smartcollect-db
+spec:
+  description: "SmartCollect Database"
+  imageName: ghcr.io/cloudnative-pg/postgresql:16.3
+  instances: 2
+  imagePullPolicy: Always
+  minSyncReplicas: 1
+  maxSyncReplicas: 2
+  startDelay: 300
+  stopDelay: 300
+  primaryUpdateStrategy: unsupervised
+  storage:
+    storageClass: standard
+    size: 200Gi
+  monitoring:
+    enablePodMonitor: true
+
+  postgresql:
+    parameters:
+      shared_buffers: 256MB
+      pg_stat_statements.max: "10000"
+      pg_stat_statements.track: all
+      auto_explain.log_min_duration: "10s"
+    pg_hba:
+      - host all all 10.244.0.0/16 md5
+
+  bootstrap:
+    initdb:
+      database: smartcollect
+      owner: smartcollect
+      secret:
+        name: smartcollect-db-user
+      # postInitSQL:
+      #   - CREATE DATABASE keycloak;
+      #   - CREATE DATABASE superset;
+      #   - CREATE DATABASE smartcollect-logs;
+
+  # superuserSecret:
+  #   name: smartcollect-db-superuser
+
+  # backup:
+  #   barmanObjectStore:
+  #     destinationPath: s3://cluster-cnpg-backup/
+  #     endpointURL: http://microk8s-hl:9000
+  #     s3Credentials:
+  #       accessKeyId:
+  #         name: minio-backup-creds
+  #         key: ACCESS_KEY_ID
+  #       secretAccessKey:
+  #         name: minio-backup-creds
+  #         key: ACCESS_SECRET_KEY
+  #     wal:
+  #       compression: gzip
+  #       encryption: AES256
+  #     data:
+  #       compression: gzip
+  #       encryption: AES256
+  #       immediateCheckpoint: false
+  #       jobs: 2
+  #   retentionPolicy: "30d"
+
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchLabels:
+              cnpg.io/cluster: smartcollect-db
+          topologyKey: kubernetes.io/hostname
+  instaceAffinity:
+    nodeLabel: db-role
+    requiredDuringSchedulingIgnoredDuringExecution:
+      primary: master
+      replica: replica
+
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "1"
+    limits:
+      memory: "1Gi"
+      cpu: "2"
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: smartcollect-db-user
+  namespace: smartcollect-db
+type: kubernetes.io/basic-auth
+data:
+  username: "c21hcnRjb2xsZWN0"
+  password: "cG9zdGdyZXM="
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: smartcollect-db-superuser
+  namespace: smartcollect-db
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: minio-backup-creds
+  namespace: smartcollect-db
+type: Opaque
+data:
+  ACCESS_KEY_ID: "bWluaW8="
+  ACCESS_SECRET_KEY: "bWluaW8="
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: smartcollect-db-service
+  namespace: smartcollect-db
+spec:
+  selector:
+    cnpg.io/cluster: smartcollect-db
+  ports:
+    - name: postgresql
+      port: 5432
+      targetPort: 5432
+  type: ClusterIP
