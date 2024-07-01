@@ -1,4 +1,5 @@
 ---
+---
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
@@ -15,23 +16,15 @@ spec:
   stopDelay: 300
   primaryUpdateStrategy: unsupervised
 
-  # Use affinity rules instead of nodeSelector
-  affinity:
-    podAntiAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-        - labelSelector:
-            matchLabels:
-              cnpg.io/cluster: smartcollect-db
-          topologyKey: "kubernetes.io/hostname"
-    nodeAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-        nodeSelectorTerms:
-          - matchExpressions:
-              - key: db-role
-                operator: In
-                values:
-                  - master
-                  - replica
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: db-role
+              operator: In
+              values:
+                - master
+                - replica
 
   storage:
     storageClass: standard
@@ -81,8 +74,8 @@ metadata:
   namespace: smartcollect-db
 type: Opaque
 data:
-  username: "cG9zdGdyZXM="  # base64 encoded "postgres"
-  password: "c3VwZXJ1c2VycGFzc3dvcmQ="  # base64 encoded "superuserpassword"
+  username: "cG9zdGdyZXM=" # base64 encoded "postgres"
+  password: "c3VwZXJ1c2VycGFzc3dvcmQ=" # base64 encoded "superuserpassword"
 
 ---
 apiVersion: v1
