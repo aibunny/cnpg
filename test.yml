@@ -15,13 +15,23 @@ spec:
   stopDelay: 300
   primaryUpdateStrategy: unsupervised
 
-  # Use nodeSelector for the primary instance
-  nodeSelector:
-    db-role: master
-
-  # Use replicaNodeSelector for the replica instances
-  replicaNodeSelector:
-    db-role: replica
+  # Use affinity rules instead of nodeSelector
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchLabels:
+              cnpg.io/cluster: smartcollect-db
+          topologyKey: "kubernetes.io/hostname"
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: db-role
+                operator: In
+                values:
+                  - master
+                  - replica
 
   storage:
     storageClass: standard
@@ -40,8 +50,10 @@ spec:
     initdb:
       database: smartcollect
       owner: smartcollect
-    secret:
-      name: smartcollect-db-user
+      secret:
+        name: smartcollect-db-user
+  superuserSecret:
+    name: smartcollect-db-superuser
   resources:
     requests:
       memory: "512Mi"
@@ -67,10 +79,10 @@ kind: Secret
 metadata:
   name: smartcollect-db-superuser
   namespace: smartcollect-db
-type: kubernetes.io/basic-auth
+type: Opaque
 data:
-  username: "cG9zdGdyZXM=" # base64 encoded "postgres"
-  password: "c3VwZXJ1c2VycGFzc3dvcmQ=" # base64 encoded "superuserpassword"
+  username: "cG9zdGdyZXM="  # base64 encoded "postgres"
+  password: "c3VwZXJ1c2VycGFzc3dvcmQ="  # base64 encoded "superuserpassword"
 
 ---
 apiVersion: v1
