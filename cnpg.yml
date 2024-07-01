@@ -114,3 +114,11 @@ spec:
       port: 5432
       targetPort: 5432
   type: ClusterIP
+
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: standard
+provisioner: kubernetes.io/no-provisioner # Replace with your provisioner if available
+volumeBindingMode: Immediate # Adjust as per your requirements
