@@ -105,6 +105,35 @@ parameters:
 
 ---
 apiVersion: v1
+kind: Secret
+metadata:
+  name: smartcollect-db-user
+  namespace: smartcollect-db
+type: kubernetes.io/basic-auth
+data:
+  username: "c21hcnRjb2xsZWN0"
+  password: "cG9zdGdyZXM="
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: smartcollect-db-superuser
+  namespace: smartcollect-db
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: minio-backup-creds
+  namespace: smartcollect-db
+type: Opaque
+data:
+  ACCESS_KEY_ID: "bWluaW8="
+  ACCESS_SECRET_KEY: "bWluaW8="
+
+---
+apiVersion: v1
 kind: Service
 metadata:
   name: smartcollect-db-service
