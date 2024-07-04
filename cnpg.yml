@@ -12,10 +12,17 @@ spec:
   maxSyncReplicas: 2
   startDelay: 300
   stopDelay: 300
+
   primaryUpdateStrategy: unsupervised
+
   storage:
-    storageClass: standard
-    size: 0.1Gi
+    storageClass: longhorn-postgres-replica-storage
+    size: 2Gi
+  walStorage:
+    storageClass: longhorn-postgres-replica-storage
+    size: 2Gi
+
+  #prometheus
   monitoring:
     enablePodMonitor: true
 
@@ -63,42 +70,38 @@ spec:
   #       jobs: 2
   #   retentionPolicy: "30d"
 
-  resources:
-    requests:
-      memory: "512Mi"
-      cpu: "1"
-    limits:
-      memory: "1Gi"
-      cpu: "2"
+  # resources:
+  #   requests:
+  #     memory: "512Mi"
+  #     cpu: "1"
+  #   limits:
+  #     memory: "1Gi"
+  #     cpu: "2"
 
 ---
-apiVersion: v1
-kind: Secret
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
 metadata:
-  name: smartcollect-db-user
-  namespace: smartcollect-db
-type: kubernetes.io/basic-auth
-data:
-  username: "c21hcnRjb2xsZWN0"
-  password: "cG9zdGdyZXM="
-
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: smartcollect-db-superuser
-  namespace: smartcollect-db
-
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: minio-backup-creds
-  namespace: smartcollect-db
-type: Opaque
-data:
-  ACCESS_KEY_ID: "bWluaW8="
-  ACCESS_SECRET_KEY: "bWluaW8="
+  name: longhorn-postgres-replica-storage
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "false"
+provisioner: driver.longhorn.io
+allowVolumeExpansion: true
+# WaitForFirstConsumer mode will delay the binding and provisioning of a PersistentVolume until a Pod using the PersistentVolumeClaim is created.
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Delete
+parameters:
+  numberOfReplicas: "1"
+  staleReplicaTimeout: "1440" # 1 day
+  fsType: "ext4"
+  diskSelector: "nvme"
+  dataLocality: "strict-local"
+  recurringJobSelector: '[
+    {
+    "name":"postgres-replica-storage",
+    "isGroup":true
+    }
+    ]'
 
 ---
 apiVersion: v1
@@ -114,11 +117,3 @@ spec:
       port: 5432
       targetPort: 5432
   type: ClusterIP
-
----
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: standard
-provisioner: kubernetes.io/no-provisioner # Replace with your provisioner if available
-volumeBindingMode: Immediate # Adjust as per your requirements

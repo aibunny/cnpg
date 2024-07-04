@@ -66,8 +66,8 @@ metadata:
   namespace: smartcollect-db
 type: Opaque
 data:
-  username: "cG9zdGdyZXM="  # base64 encoded "postgres"
-  password: "c3VwZXJ1c2VycGFzc3dvcmQ="  # base64 encoded "superuserpassword"
+  username: "cG9zdGdyZXM=" # base64 encoded "postgres"
+  password: "c3VwZXJ1c2VycGFzc3dvcmQ=" # base64 encoded "superuserpassword"
 
 ---
 apiVersion: v1
